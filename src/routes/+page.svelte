@@ -9,20 +9,20 @@
 		>
 			<h1 class="text-3xl font-bold">Restart Words</h1>
 			<div
-				class="flex w-full items-center gap-4 rounded-xl border-2 border-zinc-300 bg-zinc-200 p-3"
+				class="flex w-full cursor-pointer items-center gap-4 rounded-xl border-2 border-zinc-300 bg-zinc-200 p-3 transition-colors hover:bg-zinc-300"
 			>
 				<CalendarDays size="48" class="flex-shrink-0" />
 				<div>
-					<h2 class="text-lg font-semibold">Daily Puzzle</h2>
+					<h2 class=" font-semibold">Daily Puzzle</h2>
 					<p>Complete today's word puzzle.</p>
 				</div>
 			</div>
 			<div
-				class="flex w-full items-center gap-4 rounded-xl border-2 border-zinc-300 bg-zinc-200 p-3"
+				class="flex w-full cursor-pointer items-center gap-4 rounded-xl border-2 border-zinc-300 bg-zinc-200 p-3 transition-colors hover:bg-zinc-300"
 			>
 				<Dice5 size="48" class="flex-shrink-0" />
 				<div>
-					<h2 class="text-lg font-semibold">Random Puzzle</h2>
+					<h2 class=" font-semibold">Random Puzzle</h2>
 					<p>Complete a random puzzle, with a custom amount of letters.</p>
 				</div>
 			</div>
@@ -34,7 +34,7 @@
 			<div class="flex items-center justify-center gap-4">
 				<CircleUser size="48" class="flex-shrink-0" />
 				<div>
-					<h3 class="text-lg font-bold">Restart Words Account</h3>
+					<h3 class=" font-bold">Restart Words Account</h3>
 					<p>
 						Want to save your progress across devices? Use your Discord account to create an
 						account!
@@ -45,7 +45,7 @@
 			<div class="flex w-full items-center justify-center">
 				<a
 					href="/api/auth/discord"
-					class="flex items-center justify-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-white transition-colors duration-200 hover:bg-blue-600"
+					class="flex items-center justify-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
