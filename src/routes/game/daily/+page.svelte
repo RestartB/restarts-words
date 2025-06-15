@@ -87,65 +87,56 @@
 				if (fiveLetterWords.includes(rows[currentRow].join('').toLowerCase())) {
 					position = length; // Move position to the end of the row
 
-					// Get amount of each letter in the current row
-					const letterCount: Record<string, number> = {};
-					rows[currentRow].forEach((char) => {
-						letterCount[char] = (letterCount[char] || 0) + 1;
-					});
-
-					// Get amount of each letter in correct word
-					const wordLetterCount: Record<string, number> = {};
+					// Calculate all statuses first (outside the setTimeout)
+					const tempStatuses = Array(length).fill(-1);
+					const remainingWordLetters: Record<string, number> = {};
 					word.forEach((char) => {
-						wordLetterCount[char] = (wordLetterCount[char] || 0) + 1;
+						remainingWordLetters[char] = (remainingWordLetters[char] || 0) + 1;
 					});
 
-					// Check each tile
+					// First pass: mark all correct positions (green)
+					for (let j = 0; j < rows[currentRow].length; j++) {
+						if (rows[currentRow][j] === word[j]) {
+							tempStatuses[j] = 2; // Correct position
+							remainingWordLetters[rows[currentRow][j]]--;
+						}
+					}
+
+					// Second pass: mark wrong positions (orange) and not in word (gray)
+					for (let j = 0; j < rows[currentRow].length; j++) {
+						if (tempStatuses[j] === -1) {
+							const letter = rows[currentRow][j];
+							if (remainingWordLetters[letter] > 0) {
+								tempStatuses[j] = 1; // Wrong position
+								remainingWordLetters[letter]--;
+							} else {
+								tempStatuses[j] = 0; // Not in word
+							}
+						}
+					}
+
+					// Update letter statuses once for the entire row
+					for (let j = 0; j < rows[currentRow].length; j++) {
+						const letter = rows[currentRow][j];
+						const status = tempStatuses[j];
+
+						// Only update if the new status is better than the current one
+						// Priority: 2 (green) > 1 (orange) > 0 (gray) > -1 (not used)
+						if (letterStatuses[letter] === -1 || status > letterStatuses[letter]) {
+							letterStatuses[letter] = status;
+						}
+					}
+
+					// Now animate the tiles
 					for (let i = 0; i < rows[currentRow].length; i++) {
 						setTimeout(() => {
-							const char = rows[currentRow][i];
-
-							// First pass: mark all correct positions (green)
-							const tempStatuses = Array(length).fill(-1); // -1 = not processed yet
-							const remainingWordLetters = { ...wordLetterCount };
-
-							// Mark correct positions first and reduce available count
-							for (let j = 0; j < rows[currentRow].length; j++) {
-								if (rows[currentRow][j] === word[j]) {
-									tempStatuses[j] = 2; // Correct position
-									letterStatuses[rows[currentRow][j]] = 2;
-									remainingWordLetters[rows[currentRow][j]]--;
-								}
-							}
-
-							// Second pass: mark wrong positions (orange) and not in word (gray)
-							for (let j = 0; j < rows[currentRow].length; j++) {
-								if (tempStatuses[j] === -1) {
-									// Not processed yet
-									const letter = rows[currentRow][j];
-									if (remainingWordLetters[letter] > 0) {
-										tempStatuses[j] = 1; // Wrong position
-										if (letterStatuses[letter] === -1 || letterStatuses[letter] === 0) {
-											letterStatuses[letter] = 0; // Not in word (or no more available)
-										}
-										remainingWordLetters[letter]--;
-									} else {
-										if (letterStatuses[letter] === -1) {
-											letterStatuses[letter] = 0; // Not in word (or no more available)
-										}
-										tempStatuses[j] = 0; // Not in word (or no more available)
-									}
-								}
-							}
-
-							// Apply the status for this specific tile
+							// Apply the pre-calculated status for this tile
 							rowStatuses[currentRow][i] = tempStatuses[i];
 
-							// Check for win
+							// Check for win/loss only on the last tile
 							if (i === rows[currentRow].length - 1) {
 								if (rows[currentRow].join('') === word.join('')) {
 									attempts = currentRow + 1;
-
-									// Set playing to false and show confetti
 									playing = false;
 									setTimeout(() => {
 										hasWon = true;
@@ -154,7 +145,6 @@
 									currentRow++;
 									position = 0;
 
-									// Check for loss
 									if (currentRow >= 6) {
 										playing = false;
 										setTimeout(() => {
@@ -163,7 +153,7 @@
 									}
 								}
 							}
-						}, i * 500); // 500ms delay
+						}, i * 500);
 					}
 				} else {
 					return;

@@ -211,7 +211,7 @@ export async function load({ url }) {
             randomWord: "",
             id: 0,
             invalid: true,
-            reason: "We don't provide words for that many letters. Please try again with less letters.",
+            reason: "We don't provide words with that many letters. Please try again with less letters.",
         };
     }
 }
