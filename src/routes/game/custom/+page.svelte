@@ -214,7 +214,7 @@
 				</p>
 			</div>
 			<div
-				class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-6"
+				class="flex h-fit w-fit max-w-4xl flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-6"
 			>
 				{#each Array.from({ length: 6 }) as _, row}
 					<div class="flex items-center justify-center gap-2">
