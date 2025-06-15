@@ -3,13 +3,13 @@
 	import { onMount } from 'svelte';
 	import { Confetti } from 'svelte-confetti';
 
-	import { CircleCheck } from '@lucide/svelte';
+	import { CircleCheck, CircleX } from '@lucide/svelte';
 
 	// Get data from the page data
 	let { data } = $props();
 	const { fiveLetterWords, dailyWord, day } = data;
 
-	const word = dailyWord.split('');
+	const word = dailyWord.toUpperCase().split('');
 	const length = word.length;
 
 	let rows: string[][] = $state(Array.from({ length: 6 }, () => Array(length).fill('')));
@@ -17,16 +17,25 @@
 
 	let position = $state(0);
 	let currentRow = $state(0);
+	let attempts = $state(0); // Track the number of attempts
 
 	let hasWon = $state(false);
+	let hasLost = $state(false);
 	let playing = $state(true);
 
 	function handleKeyPress(event: KeyboardEvent) {
 		const key = event.key.toUpperCase();
 		if (!playing) return; // Don't handle keys if game is over
+		if (event.repeat) return; // Ignore repeated key presses
 
 		// Prevent default behavior for game keys
-		if (key === 'BACKSPACE' || key === 'ENTER' || key === 'ARROWLEFT' || key === 'ARROWRIGHT' || (key.length === 1 && key >= 'A' && key <= 'Z')) {
+		if (
+			key === 'BACKSPACE' ||
+			key === 'ENTER' ||
+			key === 'ARROWLEFT' ||
+			key === 'ARROWRIGHT' ||
+			(key.length === 1 && key >= 'A' && key <= 'Z')
+		) {
 			event.preventDefault();
 		}
 
@@ -60,7 +69,7 @@
 			// Check if the current row is filled
 			if (rows[currentRow].every((char) => char !== '')) {
 				// Check if the word is valid
-				if (!fiveLetterWords.includes(rows[currentRow].join('').toLowerCase())) {
+				if (fiveLetterWords.includes(rows[currentRow].join('').toLowerCase())) {
 					position = length; // Move position to the end of the row
 
 					// Check each tile
@@ -78,6 +87,14 @@
 							// Check for win
 							if (i === rows[currentRow].length - 1) {
 								if (rows[currentRow].join('') === word.join('')) {
+									// Write to localStorage
+									localStorage.setItem('dailyWord', dailyWord);
+									localStorage.setItem('day', day.toString());
+									localStorage.setItem('attempts', (currentRow + 1).toString());
+
+									attempts = currentRow + 1;
+
+									// Set playing to false and show confetti
 									playing = false;
 									setTimeout(() => {
 										hasWon = true;
@@ -90,18 +107,59 @@
 						}, i * 500); // 500ms delay
 					}
 				} else {
-					// If the word is not valid, reset the position
-					position = 0;
 					alert('Invalid word. Please try again.');
+					return;
 				}
 			}
 		}
 	}
 
 	onMount(() => {
+		const storedWord = localStorage.getItem('dailyWord');
+		const storedDay = localStorage.getItem('day');
+		const storedAttempts = localStorage.getItem('attempts');
+
+		if (storedWord && storedDay && storedAttempts) {
+			const parsedDay = parseInt(storedDay, 10);
+			attempts = parseInt(storedAttempts, 10);
+			if (parsedDay === day) {
+				if (storedWord === dailyWord) {
+					// Set playing to false and show confetti
+					playing = false;
+					setTimeout(() => {
+						hasWon = true;
+					}, 800);
+					return;
+				}
+			}
+		}
+
 		document.addEventListener('keydown', handleKeyPress);
 	});
 </script>
+
+<noscript>
+	<div class="flex min-h-screen w-full items-center justify-center" in:fly={{ y: 100 }}>
+		<div class="flex flex-col items-center gap-4">
+			<div
+				class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-6 text-center"
+			>
+				<CircleX size="64" color="red" />
+				<h1 class="text-3xl font-bold">Enable JavaScript</h1>
+				<p class="text-xl">
+					To play this game, please enable JavaScript in your browser settings, or switch to a
+					browser that supports JavaScript.
+				</p>
+			</div>
+		</div>
+	</div>
+
+	<style>
+		.game {
+			display: none;
+		}
+	</style>
+</noscript>
 
 <div class="flex min-h-screen w-full items-center justify-center">
 	{#if hasWon}
@@ -130,24 +188,40 @@
 		<div class="flex min-h-screen w-full items-center justify-center" in:fly={{ y: 100 }}>
 			<div class="flex flex-col items-center gap-4">
 				<div
-					class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-6"
+					class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-6 text-center"
 				>
 					<CircleCheck size="64" color="green" />
 					<h1 class="text-3xl font-bold">Congratulations!</h1>
 					<p class="text-xl">
 						You guessed the word <strong>{word.join('')}</strong> in
-						<strong>{currentRow + 1}</strong> guesses.
+						<strong>{attempts}</strong> guesses.
+					</p>
+				</div>
+			</div>
+		</div>
+	{:else if hasLost}
+		<div class="flex min-h-screen w-full items-center justify-center" in:fly={{ y: 100 }}>
+			<div class="flex flex-col items-center gap-4">
+				<div
+					class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-6 text-center"
+				>
+					<CircleX size="64" color="red" />
+					<h1 class="text-3xl font-bold">Uh oh!</h1>
+					<p class="text-xl">
+						You couldn't guess the word in 6 guesses. The word was <strong>{word.join('')}</strong>.
 					</p>
 				</div>
 			</div>
 		</div>
 	{:else if playing}
-		<div class="flex flex-col items-center gap-2" out:fly={{ y: 100 }}>
+		<div class="flex flex-col items-center gap-2" out:fly={{ y: 100 }} id="game">
 			<div class="flex w-full items-center justify-between">
 				<h1 class="rounded-full border-2 border-zinc-400 bg-zinc-100 p-1 px-4 font-bold">
 					Daily Puzzle
 				</h1>
-				<p class="font-smibold rounded-full border-2 border-zinc-400 bg-zinc-100 p-1 px-4">Day {day}</p>
+				<p class="font-smibold rounded-full border-2 border-zinc-400 bg-zinc-100 p-1 px-4">
+					Day {day}
+				</p>
 			</div>
 			<div
 				class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-6"

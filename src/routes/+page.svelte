@@ -8,15 +8,17 @@
 			class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-200 bg-zinc-100 p-6"
 		>
 			<h1 class="text-3xl font-bold">Restart Words</h1>
-			<div
+			<a
 				class="flex w-full cursor-pointer items-center gap-4 rounded-xl border-2 border-zinc-300 bg-zinc-200 p-3 transition-colors hover:bg-zinc-300"
+				href="/game/daily"
+				title="Daily Puzzle"
 			>
 				<CalendarDays size="48" class="flex-shrink-0" />
 				<div>
 					<h2 class=" font-semibold">Daily Puzzle</h2>
 					<p>Complete today's word puzzle.</p>
 				</div>
-			</div>
+			</a>
 			<div
 				class="flex w-full cursor-pointer items-center gap-4 rounded-xl border-2 border-zinc-300 bg-zinc-200 p-3 transition-colors hover:bg-zinc-300"
 			>
