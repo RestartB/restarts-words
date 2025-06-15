@@ -17,7 +17,7 @@
 
 	let position = $state(0);
 	let currentRow = $state(0);
-	let attempts = $state(0); // Track the number of attempts
+	let attempts = $state(0);
 
 	let hasWon = $state(false);
 	let hasLost = $state(false);
@@ -72,17 +72,51 @@
 				if (words.includes(rows[currentRow].join('').toLowerCase())) {
 					position = length; // Move position to the end of the row
 
+					// Get amount of each letter in the current row
+					const letterCount: Record<string, number> = {};
+					rows[currentRow].forEach((char) => {
+						letterCount[char] = (letterCount[char] || 0) + 1;
+					});
+
+					// Get amount of each letter in correct word
+					const wordLetterCount: Record<string, number> = {};
+					word.forEach((char) => {
+						wordLetterCount[char] = (wordLetterCount[char] || 0) + 1;
+					});
+
 					// Check each tile
 					for (let i = 0; i < rows[currentRow].length; i++) {
 						setTimeout(() => {
 							const char = rows[currentRow][i];
-							if (char === word[i]) {
-								rowStatuses[currentRow][i] = 2; // Correct position
-							} else if (word.includes(char)) {
-								rowStatuses[currentRow][i] = 1; // Wrong position
-							} else {
-								rowStatuses[currentRow][i] = 0; // Not in word
+
+							// First pass: mark all correct positions (green)
+							const tempStatuses = Array(length).fill(-1); // -1 = not processed yet
+							const remainingWordLetters = { ...wordLetterCount };
+
+							// Mark correct positions first and reduce available count
+							for (let j = 0; j < rows[currentRow].length; j++) {
+								if (rows[currentRow][j] === word[j]) {
+									tempStatuses[j] = 2; // Correct position
+									remainingWordLetters[rows[currentRow][j]]--;
+								}
 							}
+
+							// Second pass: mark wrong positions (orange) and not in word (gray)
+							for (let j = 0; j < rows[currentRow].length; j++) {
+								if (tempStatuses[j] === -1) {
+									// Not processed yet
+									const letter = rows[currentRow][j];
+									if (remainingWordLetters[letter] > 0) {
+										tempStatuses[j] = 1; // Wrong position
+										remainingWordLetters[letter]--;
+									} else {
+										tempStatuses[j] = 0; // Not in word (or no more available)
+									}
+								}
+							}
+
+							// Apply the status for this specific tile
+							rowStatuses[currentRow][i] = tempStatuses[i];
 
 							// Check for win
 							if (i === rows[currentRow].length - 1) {
@@ -97,6 +131,14 @@
 								} else {
 									currentRow++;
 									position = 0;
+
+									// Check for loss
+									if (currentRow >= 6) {
+										playing = false;
+										setTimeout(() => {
+											hasLost = true;
+										}, 800);
+									}
 								}
 							}
 						}, i * 500); // 500ms delay

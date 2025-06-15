@@ -6,3 +6,11 @@
 		<p>Placeholder</p>
 	</div>
 </header>
+
+<style>
+	@media (max-height: 900px) {
+		header {
+			position:initial;
+		}
+	}
+</style>
