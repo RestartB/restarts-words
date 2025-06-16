@@ -11,7 +11,9 @@
 
 	// Get data from the page data
 	let { data } = $props();
-	const { fiveLetterWords, dailyWord, day, accComplete } = data;
+	const { fiveLetterWords, dailyWord, day, accComplete, lastAttempts } = data;
+
+	console.log(accComplete);
 
 	const word = dailyWord.toUpperCase().split('');
 	const length = word.length;
@@ -21,7 +23,7 @@
 
 	let position = $state(0);
 	let currentRow = $state(0);
-	let attempts = $state(0);
+	let attempts = $state(data.lastAttempts || 0);
 
 	let hasWon = $state(false);
 	let hasLost = $state(false);
@@ -38,12 +40,12 @@
 	async function sendResult(won: boolean) {
 		if ($session?.data?.user) {
 			try {
-				const response = await fetch('/api/custom-complete', {
+				const response = await fetch('/api/validate-daily', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json'
 					},
-					body: JSON.stringify({ word: word.join('').toLowerCase(), wordID: day, won }),
+					body: JSON.stringify({ word: word.join('').toLowerCase(), wordID: day, won, attempts }),
 					credentials: 'include'
 				});
 
@@ -54,7 +56,7 @@
 				}
 
 				const result = await response.json();
-				console.log('Stats updated:', result);
+				console.log('Stats updated');
 			} catch (error) {
 				console.error('Error updating stats:', error);
 			}
@@ -171,6 +173,11 @@
 									playing = false;
 									sendResult(true);
 
+									localStorage.setItem('dailyWord', dailyWord);
+									localStorage.setItem('day', day.toString());
+									localStorage.setItem('attempts', attempts.toString());
+									localStorage.setItem('status', 'won');
+
 									setTimeout(() => {
 										hasWon = true;
 									}, 800);
@@ -181,6 +188,11 @@
 									if (currentRow >= 6) {
 										playing = false;
 										sendResult(false);
+
+										localStorage.setItem('dailyWord', dailyWord);
+										localStorage.setItem('day', day.toString());
+										localStorage.setItem('attempts', attempts.toString());
+										localStorage.setItem('status', 'lost');
 
 										setTimeout(() => {
 											hasLost = true;
@@ -201,6 +213,12 @@
 		const storedWord = localStorage.getItem('dailyWord');
 		const storedDay = localStorage.getItem('day');
 		const storedAttempts = localStorage.getItem('attempts');
+		const storedStatus = localStorage.getItem('status');
+
+		console.log('Stored Word:', storedWord);
+		console.log('Stored Day:', storedDay);
+		console.log('Stored Attempts:', storedAttempts);
+		console.log('Stored Status:', storedStatus);
 
 		if (accComplete) {
 			// Set playing to false and show confetti
@@ -215,12 +233,21 @@
 				attempts = parseInt(storedAttempts, 10);
 				if (parsedDay === day) {
 					if (storedWord === dailyWord) {
-						// Set playing to false and show confetti
-						playing = false;
-						setTimeout(() => {
-							hasWon = true;
-						}, 800);
-						return;
+						if (storedStatus === 'won') {
+							// Set playing to false and show confetti
+							playing = false;
+							setTimeout(() => {
+								hasWon = true;
+							}, 800);
+							return;
+						} else if (storedStatus === 'lost') {
+							// Set playing to false and show loss message
+							playing = false;
+							setTimeout(() => {
+								hasLost = true;
+							}, 800);
+							return;
+						}
 					}
 				}
 			}
@@ -231,7 +258,7 @@
 </script>
 
 <noscript>
-	<div class="flex min-h-screen w-full items-center justify-center" in:fly={{ y: 100 }}>
+	<div class="flex w-full items-center justify-center" in:fly={{ y: 100 }}>
 		<div class="flex flex-col items-center gap-4">
 			<div
 				class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-6 text-center"
@@ -253,7 +280,7 @@
 	</style>
 </noscript>
 
-<div class="flex min-h-screen w-full items-center justify-center" id="gameContainer">
+<div class="flex w-full items-center justify-center" id="gameContainer">
 	{#if hasWon}
 		<div
 			style="
@@ -277,10 +304,10 @@
 			/>
 		</div>
 
-		<div class="flex min-h-screen w-full items-center justify-center p-4 pt-0" in:fly={{ y: 100 }}>
+		<div class="flex w-full items-center justify-center" in:fly={{ y: 100 }}>
 			<div class="flex flex-col items-center gap-4">
 				<div
-					class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-6 text-center"
+					class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-6 text-center dark:bg-zinc-800"
 				>
 					<CircleCheck size="64" color="green" />
 					<h1 class="text-3xl font-bold">Congratulations!</h1>
@@ -288,66 +315,105 @@
 						You guessed the word <strong>{word.join('')}</strong> in
 						<strong>{attempts}</strong> guesses.
 					</p>
+
+					<a
+						href="/"
+						class="cursor-pointer rounded bg-gray-500 px-4 py-2 text-white transition-colors hover:bg-gray-600"
+					>
+						Home
+					</a>
+					<a
+						href="/stats"
+						class="cursor-pointer rounded bg-gray-500 px-4 py-2 text-white transition-colors hover:bg-gray-600"
+					>
+						Stats
+					</a>
 				</div>
 			</div>
 		</div>
 	{:else if hasLost}
-		<div class="flex min-h-screen w-full items-center justify-center p-4 pt-0" in:fly={{ y: 100 }}>
+		<div class="flex w-full items-center justify-center" in:fly={{ y: 100 }}>
 			<div class="flex flex-col items-center gap-4">
 				<div
-					class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-6 text-center"
+					class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-6 text-center dark:bg-zinc-800"
 				>
 					<CircleX size="64" color="red" />
 					<h1 class="text-3xl font-bold">Uh oh!</h1>
 					<p class="text-xl">
 						You couldn't guess the word in 6 guesses. The word was <strong>{word.join('')}</strong>.
 					</p>
+
+					<a
+						href="/"
+						class="cursor-pointer rounded bg-gray-500 px-4 py-2 text-white transition-colors hover:bg-gray-600"
+					>
+						Home
+					</a>
+					<a
+						href="/stats"
+						class="cursor-pointer rounded bg-gray-500 px-4 py-2 text-white transition-colors hover:bg-gray-600"
+					>
+						Stats
+					</a>
 				</div>
 			</div>
 		</div>
 	{:else if playing}
 		<div
-			class="flex h-fit w-full max-w-lg flex-col items-center gap-2 p-4 pt-0"
+			class="flex h-fit w-full max-w-lg flex-col items-center gap-4"
 			out:fly={{ y: 100 }}
 			id="game"
 		>
 			<div class="flex w-full items-center justify-between">
-				<h1 class="rounded-full border-2 border-zinc-400 bg-zinc-100 p-1 px-4 font-bold">
+				<h1
+					class="rounded-full border-2 border-zinc-400 bg-zinc-100 p-1 px-4 font-bold dark:bg-zinc-800"
+				>
 					Daily Puzzle
 				</h1>
-				<p class="font-smibold rounded-full border-2 border-zinc-400 bg-zinc-100 p-1 px-4">
+				<p
+					class="font-smibold rounded-full border-2 border-zinc-400 bg-zinc-100 p-1 px-4 dark:bg-zinc-800"
+				>
 					Day {day}
 				</p>
 			</div>
-			<div
-				class="flex h-fit w-full max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-6"
-			>
-				{#each Array.from({ length: 6 }) as _, row}
-					<div class="flex items-center justify-center gap-2">
-						{#each Array.from({ length }) as _, i}
-							<!-- svelte-ignore a11y_click_events_have_key_events -->
-							<!-- svelte-ignore a11y_no_static_element_interactions -->
-							<div
-								class="tile-size box-border flex aspect-square flex-1 items-center justify-center rounded-lg border-2 border-zinc-400 text-center transition-colors"
-								class:cursor-pointer={row === currentRow}
-								class:bg-zinc-200={position === i && row === currentRow}
-								class:bg-zinc-300={rowStatuses[row][i] === 0}
-								class:bg-orange-300={rowStatuses[row][i] === 1}
-								class:bg-green-300={rowStatuses[row][i] === 2}
-								onclick={() => {
-									if (row === currentRow) {
-										position = i;
-									}
-								}}
-							>
-								<span class="text-4xl font-bold" transition:fly={{ y: 20 }}>{rows[row][i]}</span>
-							</div>
-						{/each}
-					</div>
-				{/each}
+			<div class="max-w-full overflow-x-auto px-4">
+				<div class="flex flex-col gap-4">
+					{#each Array.from({ length: 6 }) as _, row}
+						<div class="flex items-center justify-center gap-2">
+							{#each Array.from({ length }) as _, i}
+								<!-- svelte-ignore a11y_click_events_have_key_events -->
+								<!-- svelte-ignore a11y_no_static_element_interactions -->
+								<div
+									class="overflow-hidden rounded-lg border-2 border-zinc-400 bg-zinc-100 dark:bg-zinc-900"
+								>
+									<div
+										class="tile-size box-border flex aspect-square items-center justify-center text-center transition-colors"
+										class:cursor-pointer={row === currentRow}
+										class:bg-zinc-300={position === i && row === currentRow}
+										class:dark:bg-zinc-700={position === i && row === currentRow}
+										class:bg-zinc-400={rowStatuses[row][i] === 0}
+										class:dark:bg-zinc-600={rowStatuses[row][i] === 0}
+										class:bg-orange-300={rowStatuses[row][i] === 1}
+										class:dark:bg-orange-600={rowStatuses[row][i] === 1}
+										class:bg-green-300={rowStatuses[row][i] === 2}
+										class:dark:bg-green-600={rowStatuses[row][i] === 2}
+										onclick={() => {
+											if (row === currentRow) {
+												position = i;
+											}
+										}}
+									>
+										<span class="text-4xl font-bold" transition:fly={{ y: 20 }}>{rows[row][i]}</span
+										>
+									</div>
+								</div>
+							{/each}
+						</div>
+					{/each}
+				</div>
 			</div>
 			<div
-				class="flex h-fit w-full max-w-2xl flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-2 py-4 sm:p-6"
+				class="flex h-fit w-full max-w-2xl flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-2 py-4 sm:p-6 dark:bg-zinc-800"
 			>
 				<div class="flex w-full flex-nowrap items-center justify-center gap-2">
 					<Key key="Q" size={48} status={letterStatuses['Q']} />
@@ -380,6 +446,7 @@
 					<Key key="V" size={48} status={letterStatuses['V']} />
 					<Key key="B" size={48} status={letterStatuses['B']} />
 					<Key key="N" size={48} status={letterStatuses['N']} />
+					<Key key="M" size={48} status={letterStatuses['M']} />
 					<Key key="ENTER" size={48} status={-1} />
 				</div>
 			</div>
@@ -388,12 +455,6 @@
 </div>
 
 <style>
-	@media (max-height: 900px) {
-		#gameContainer {
-			min-height: 0 !important;
-		}
-	}
-
 	.tile-size {
 		height: clamp(3rem, 8vw, 4rem);
 	}

@@ -10,9 +10,6 @@ export const load: PageServerLoad = async (event) => {
 		headers: event.request.headers
 	});
 
-	console.log('Session:', session);
-	console.log('User ID:', session?.user?.id);
-
 	if (!session?.user?.id) {
 		return {
 			userStats: null,
@@ -28,7 +25,6 @@ export const load: PageServerLoad = async (event) => {
 			.limit(1)
 			.then((rows) => rows[0]);
 
-		console.log('User stats:', userStats);
 		if (!userStats) {
 			return {
 				userStats: null,
@@ -37,7 +33,7 @@ export const load: PageServerLoad = async (event) => {
 			};
 		}
 
-		return { userStats, authenticated: true };
+		return { userStats, authenticated: true, session };
 	} catch (error) {
 		console.error('Error fetching user stats:', error);
 		return {

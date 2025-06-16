@@ -8,6 +8,7 @@
 
 	import { CircleCheck, CircleX } from '@lucide/svelte';
 	import Key from '$lib/components/Key.svelte';
+	import CustomOptionsPopup from '$lib/components/CustomOptionsPopup.svelte';
 
 	// Get data from the page data
 	let { data } = $props();
@@ -23,9 +24,16 @@
 	let currentRow = $state(0);
 	let attempts = $state(0);
 
+	// Add a reference to track tile elements
+	let tileRefs: HTMLDivElement[][] = $state(
+		Array.from({ length: 6 }, () => Array(length).fill(null))
+	);
+
 	let hasWon = $state(false);
 	let hasLost = $state(false);
 	let playing = $state(true);
+
+	let popupOpen = $state(false);
 
 	let letterStatuses: Record<string, number> = $state({});
 
@@ -36,6 +44,9 @@
 	});
 
 	async function sendResult(won: boolean) {
+		// Small delay to ensure session is loaded
+		await new Promise((resolve) => setTimeout(resolve, 100));
+
 		if ($session?.data?.user) {
 			try {
 				const response = await fetch('/api/custom-complete', {
@@ -54,12 +65,12 @@
 				}
 
 				const result = await response.json();
-				console.log('Stats updated:', result);
+				console.log('Stats updated successfully');
 			} catch (error) {
 				console.error('Error updating stats:', error);
 			}
 		} else {
-			console.warn('Not authenticated');
+			console.log('User not authenticated - stats will not be saved');
 		}
 	}
 
@@ -197,16 +208,30 @@
 		}
 	}
 
+	// Reactive statement to scroll to active tile
+	$effect(() => {
+		if (playing && tileRefs[currentRow]?.[position]) {
+			// Small delay to ensure DOM is updated
+			setTimeout(() => {
+				tileRefs[currentRow][position]?.scrollIntoView({
+					behavior: 'smooth',
+					block: 'nearest',
+					inline: 'center'
+				});
+			}, 50);
+		}
+	});
+
 	onMount(() => {
 		document.addEventListener('keydown', handleKeyPress);
 	});
 </script>
 
 <noscript>
-	<div class="flex min-h-screen w-full items-center justify-center" in:fly={{ y: 100 }}>
+	<div class="flex w-full items-center justify-center" in:fly={{ y: 100 }}>
 		<div class="flex flex-col items-center gap-4">
 			<div
-				class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-6 text-center"
+				class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-6 text-center dark:bg-zinc-800"
 			>
 				<CircleX size="64" color="red" />
 				<h1 class="text-3xl font-bold">Enable JavaScript</h1>
@@ -225,7 +250,9 @@
 	</style>
 </noscript>
 
-<div class="flex min-h-screen w-full items-center justify-center" id="gameContainer">
+<div class="flex w-full items-center justify-center" id="gameContainer">
+	<CustomOptionsPopup bind:popupOpen />
+
 	{#if hasWon}
 		<div
 			style="
@@ -249,10 +276,10 @@
 			/>
 		</div>
 
-		<div class="flex min-h-screen w-full items-center justify-center p-4 pt-0" in:fly={{ y: 100 }}>
+		<div class="flex w-full items-center justify-center" in:fly={{ y: 100 }}>
 			<div class="flex flex-col items-center gap-4">
 				<div
-					class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-6 text-center"
+					class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-6 text-center dark:bg-zinc-800"
 				>
 					<CircleCheck size="64" color="green" />
 					<h1 class="text-3xl font-bold">Congratulations!</h1>
@@ -260,28 +287,72 @@
 						You guessed the word <strong>{word.join('')}</strong> in
 						<strong>{attempts}</strong> guesses.
 					</p>
+
+					<div class="flex w-full flex-col items-center justify-center gap-2">
+						<a
+							href="/game/custom?length={length}"
+							class="cursor-pointer rounded bg-green-500 px-4 py-2 text-white transition-colors hover:bg-green-600"
+							data-sveltekit-reload
+						>
+							Another {length} letter word
+						</a>
+						<button
+							onclick={() => (popupOpen = true)}
+							class="cursor-pointer rounded bg-gray-500 px-4 py-2 text-white transition-colors hover:bg-gray-600"
+						>
+							Change settings and play again
+						</button>
+						<a
+							href="/stats"
+							class="cursor-pointer rounded bg-gray-500 px-4 py-2 text-white transition-colors hover:bg-gray-600"
+						>
+							Stats
+						</a>
+					</div>
 				</div>
 			</div>
 		</div>
 	{:else if hasLost}
-		<div class="flex min-h-screen w-full items-center justify-center p-4 pt-0" in:fly={{ y: 100 }}>
+		<div class="flex w-full items-center justify-center" in:fly={{ y: 100 }}>
 			<div class="flex flex-col items-center gap-4">
 				<div
-					class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-6 text-center"
+					class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-6 text-center dark:bg-zinc-800"
 				>
 					<CircleX size="64" color="red" />
 					<h1 class="text-3xl font-bold">Uh oh!</h1>
 					<p class="text-xl">
 						You couldn't guess the word in 6 guesses. The word was <strong>{word.join('')}</strong>.
 					</p>
+
+					<div class="flex w-full flex-col items-center justify-center gap-2">
+						<a
+							href="/game/custom?length={length}"
+							class="cursor-pointer rounded bg-green-500 px-4 py-2 text-white transition-colors hover:bg-green-600"
+							data-sveltekit-reload
+						>
+							Another {length} letter word
+						</a>
+						<button
+							onclick={() => (popupOpen = true)}
+							class="cursor-pointer rounded bg-gray-500 px-4 py-2 text-white transition-colors hover:bg-gray-600"
+						>
+							Change settings and play again
+						</button>
+						<a
+							href="/stats"
+							class="cursor-pointer rounded bg-gray-500 px-4 py-2 text-white transition-colors hover:bg-gray-600"
+						>
+							Stats
+						</a>
+					</div>
 				</div>
 			</div>
 		</div>
 	{:else if invalid}
-		<div class="flex min-h-screen w-full items-center justify-center p-4 pt-0" in:fly={{ y: 100 }}>
+		<div class="flex w-full items-center justify-center" in:fly={{ y: 100 }}>
 			<div class="flex flex-col items-center gap-4">
 				<div
-					class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-6 text-center"
+					class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-6 text-center dark:bg-zinc-800"
 				>
 					<CircleX size="64" color="red" />
 					<h1 class="text-3xl font-bold">Woah there!</h1>
@@ -291,47 +362,61 @@
 		</div>
 	{:else if playing}
 		<div
-			class="flex h-fit w-full max-w-lg flex-col items-center gap-2 p-4 pt-0"
+			class="flex h-fit w-full max-w-3xl flex-col items-center gap-4"
 			out:fly={{ y: 100 }}
 			id="game"
 		>
 			<div class="flex w-full items-center justify-between">
-				<h1 class="rounded-full border-2 border-zinc-400 bg-zinc-100 p-1 px-4 font-bold">
+				<h1
+					class="rounded-full border-2 border-zinc-400 bg-zinc-100 p-1 px-4 font-bold dark:bg-zinc-800"
+				>
 					Random Puzzle - {length} letters
 				</h1>
-				<p class="font-smibold rounded-full border-2 border-zinc-400 bg-zinc-100 p-1 px-4">
+				<p
+					class="font-smibold rounded-full border-2 border-zinc-400 bg-zinc-100 p-1 px-4 dark:bg-zinc-800"
+				>
 					#{id}
 				</p>
 			</div>
-			<div
-				class="flex h-fit w-full max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-6"
-			>
-				{#each Array.from({ length: 6 }) as _, row}
-					<div class="flex items-center justify-center gap-2">
-						{#each Array.from({ length }) as _, i}
-							<!-- svelte-ignore a11y_click_events_have_key_events -->
-							<!-- svelte-ignore a11y_no_static_element_interactions -->
-							<div
-								class="tile-size box-border flex aspect-square flex-1 items-center justify-center rounded-lg border-2 border-zinc-400 text-center transition-colors"
-								class:cursor-pointer={row === currentRow}
-								class:bg-zinc-200={position === i && row === currentRow}
-								class:bg-zinc-300={rowStatuses[row][i] === 0}
-								class:bg-orange-300={rowStatuses[row][i] === 1}
-								class:bg-green-300={rowStatuses[row][i] === 2}
-								onclick={() => {
-									if (row === currentRow) {
-										position = i;
-									}
-								}}
-							>
-								<span class="text-4xl font-bold" transition:fly={{ y: 20 }}>{rows[row][i]}</span>
-							</div>
-						{/each}
-					</div>
-				{/each}
+			<div class="max-w-full overflow-x-auto px-4">
+				<div class="flex flex-col gap-4">
+					{#each Array.from({ length: 6 }) as _, row}
+						<div class="flex items-center justify-center gap-2" style="min-width: {length * 4}rem;">
+							{#each Array.from({ length }) as _, i}
+								<!-- svelte-ignore a11y_click_events_have_key_events -->
+								<!-- svelte-ignore a11y_no_static_element_interactions -->
+								<div
+									class="overflow-hidden rounded-lg border-2 border-zinc-400 bg-zinc-100 dark:bg-zinc-900"
+								>
+									<div
+										class="tile-size box-border flex aspect-square items-center justify-center text-center transition-colors"
+										class:cursor-pointer={row === currentRow}
+										class:bg-zinc-300={position === i && row === currentRow}
+										class:dark:bg-zinc-700={position === i && row === currentRow}
+										class:bg-zinc-400={rowStatuses[row][i] === 0}
+										class:dark:bg-zinc-600={rowStatuses[row][i] === 0}
+										class:bg-orange-300={rowStatuses[row][i] === 1}
+										class:dark:bg-orange-600={rowStatuses[row][i] === 1}
+										class:bg-green-300={rowStatuses[row][i] === 2}
+										class:dark:bg-green-600={rowStatuses[row][i] === 2}
+										bind:this={tileRefs[row][i]}
+										onclick={() => {
+											if (row === currentRow) {
+												position = i;
+											}
+										}}
+									>
+										<span class="text-4xl font-bold" transition:fly={{ y: 20 }}>{rows[row][i]}</span
+										>
+									</div>
+								</div>
+							{/each}
+						</div>
+					{/each}
+				</div>
 			</div>
 			<div
-				class="flex h-fit w-full max-w-2xl flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-2 py-4 sm:p-6"
+				class="flex h-fit w-full max-w-2xl flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-400 bg-zinc-100 p-2 py-4 sm:p-6 dark:bg-zinc-800"
 			>
 				<div class="flex w-full flex-nowrap items-center justify-center gap-2">
 					<Key key="Q" size={48} status={letterStatuses['Q']} />
@@ -364,6 +449,7 @@
 					<Key key="V" size={48} status={letterStatuses['V']} />
 					<Key key="B" size={48} status={letterStatuses['B']} />
 					<Key key="N" size={48} status={letterStatuses['N']} />
+					<Key key="M" size={48} status={letterStatuses['M']} />
 					<Key key="ENTER" size={48} status={-1} />
 				</div>
 			</div>
@@ -372,12 +458,6 @@
 </div>
 
 <style>
-	@media (max-height: 900px) {
-		#gameContainer {
-			min-height: 0 !important;
-		}
-	}
-
 	.tile-size {
 		height: clamp(3rem, 8vw, 4rem);
 	}

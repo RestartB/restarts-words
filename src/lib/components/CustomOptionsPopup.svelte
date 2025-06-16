@@ -12,17 +12,17 @@
 
 {#if popupOpen}
 	<div
-		class="absolute top-0 left-0 z-50 flex h-full w-full items-center justify-center bg-zinc-300/70 backdrop-blur-sm"
+		class="absolute top-0 left-0 z-50 flex h-full w-full items-center justify-center bg-zinc-300/70 backdrop-blur-sm dark:bg-zinc-700/70"
 		transition:fade={{ duration: 200 }}
 	>
 		<div
-			class="flex flex-col items-center justify-center gap-6 rounded-xl border-4 border-zinc-200 bg-zinc-100 p-6"
+			class="flex flex-col items-center justify-center gap-6 rounded-xl border-4 border-zinc-200 bg-zinc-100 p-6 dark:bg-zinc-900"
 			transition:fly={{ y: 20, duration: 300 }}
 		>
 			<div class="flex w-full items-center justify-between">
 				<h2 class="font-bold">Custom Options</h2>
 				<button
-					class="cursor-pointer text-zinc-600 transition-colors hover:text-zinc-900"
+					class="cursor-pointer text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
 					onclick={() => (popupOpen = false)}
 				>
 					<CircleX />
@@ -40,14 +40,14 @@
 						step={1}
 					>
 						<span
-							class="relative h-2 w-full grow cursor-pointer overflow-hidden rounded-full bg-zinc-300"
+							class="relative h-2 w-full grow cursor-pointer overflow-hidden rounded-full bg-zinc-300 dark:bg-zinc-700"
 						>
 							<Slider.Range class="bg-foreground absolute h-full" />
 						</span>
 						<Slider.Thumb
 							index={0}
 							class={cn(
-								'block size-[25px] cursor-pointer rounded-full border bg-zinc-800 shadow-sm transition-colors focus:border-zinc-300'
+								'block size-[25px] cursor-pointer rounded-full border bg-zinc-800 shadow-sm transition-colors focus:border-zinc-300 dark:bg-zinc-200 dark:focus:border-zinc-600'
 							)}
 						/>
 					</Slider.Root>
@@ -56,7 +56,7 @@
 				<NumberFlow
 					locales="en-US"
 					willChange
-					value={value}
+					{value}
 					aria-hidden="true"
 					plugins={[continuous]}
 					opacityTiming={{
@@ -72,8 +72,9 @@
 			</div>
 			<a
 				href={`/game/custom?letters=${value}`}
-				class="w-full cursor-pointer rounded-xl border-2 border-zinc-300 bg-zinc-200 p-3 text-center transition-colors hover:bg-zinc-300"
+				class="w-full cursor-pointer rounded-xl border-2 border-zinc-300 bg-zinc-200 p-3 text-center transition-colors hover:bg-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700"
 				onclick={() => (popupOpen = false)}
+				data-sveltekit-reload
 			>
 				<h2 class="font-semibold">Start Puzzle</h2>
 			</a>

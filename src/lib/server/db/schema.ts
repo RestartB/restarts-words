@@ -44,8 +44,9 @@ export const discordUsers = sqliteTable('discordUsers', {
 	dailyStreak: integer().notNull(),
 	dailyCompleted: integer().notNull(),
 	dailyWon: integer().notNull(),
+	lastAttempts: integer().notNull(),
 	customCompleted: integer().notNull(),
-	customWon: integer().notNull(),
+	customWon: integer().notNull()
 });
 
 export const user = sqliteTable('user', {

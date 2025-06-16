@@ -19,10 +19,18 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		// Parse request body
-		const { word, wordID, won } = await request.json();
+		const { word, wordID, won, attempts } = await request.json();
 
-		if (!word || typeof word !== 'string' || !wordID || typeof wordID !== 'number') {
-			return json({ error: 'Invalid input data' }, { status: 400 });
+		if (!word || typeof word !== 'string') {
+			return json({ error: 'Invalid word input' }, { status: 400 });
+		}
+
+		if (!wordID || typeof wordID !== 'number') {
+			return json({ error: 'Invalid word ID' }, { status: 400 });
+		}
+
+		if (!attempts || typeof wordID !== 'number') {
+			return json({ error: 'Invalid attempts' }, { status: 400 });
 		}
 
 		if (typeof won !== 'boolean') {
@@ -56,36 +64,40 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		// Validate the submitted word
-        if (word.toLowerCase() !== completedWord[0].word.toLowerCase()) {
-            return json({ error: 'Invalid word submission' }, { status: 400 });
-        }
+		if (word.toLowerCase() !== completedWord[0].word.toLowerCase()) {
+			return json({ error: 'Invalid word submission' }, { status: 400 });
+		}
 
-		// Calculate new streak (consecutive days)
-        const newStreak = Number(user[0].lastCompletedDaily) === wordID - 1 
-            ? Number(user[0].dailyStreak) + 1 
-            : 1;
+		// Check if user's streak is still valid
+		const lastCompleted = user[0].lastCompletedDaily;
+		let newStreak;
+
+		if (!(lastCompleted === completedWord[0].id || lastCompleted === completedWord[0].id - 1)) {
+			newStreak = 1;
+		} else {
+			newStreak = Number(user[0].dailyStreak) + 1;
+		}
 
 		// Update user stats in transaction
-        await db.transaction(async (tx) => {
-            await tx
-                .update(discordUsers)
-                .set({
-                    lastCompletedDaily: wordID,
-                    dailyStreak: newStreak,
-                    dailyCompleted: Number(user[0].dailyCompleted) + 1,
-                    dailyWon: won 
-                        ? Number(user[0].dailyWon) + 1 
-                        : Number(user[0].dailyWon)
-                })
-                .where(eq(discordUsers.id, session.user.id));
-        });
+		await db.transaction(async (tx) => {
+			await tx
+				.update(discordUsers)
+				.set({
+					lastCompletedDaily: wordID,
+					dailyStreak: newStreak,
+					dailyCompleted: Number(user[0].dailyCompleted) + 1,
+					dailyWon: won ? Number(user[0].dailyWon) + 1 : Number(user[0].dailyWon),
+					lastAttempts: attempts
+				})
+				.where(eq(discordUsers.id, session.user.id));
+		});
 
-        return json({ 
-            success: true,
-            newStreak,
-            dailyCompleted: Number(user[0].dailyCompleted) + 1,
-            dailyWon: won ? Number(user[0].dailyWon) + 1 : Number(user[0].dailyWon)
-        });
+		return json({
+			success: true,
+			newStreak,
+			dailyCompleted: Number(user[0].dailyCompleted) + 1,
+			dailyWon: won ? Number(user[0].dailyWon) + 1 : Number(user[0].dailyWon)
+		});
 	} catch (error) {
 		console.error('API Error:', error);
 		return json({ error: 'Internal server error' }, { status: 500 });

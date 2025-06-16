@@ -33,14 +33,14 @@
 	}
 </script>
 
-<div class="flex min-h-screen w-full items-center justify-center">
+<div class="flex w-full items-center justify-center">
 	<div class="flex flex-col items-center gap-4">
 		<div
-			class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-200 bg-zinc-100 p-6"
+			class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-200 bg-zinc-100 p-6 dark:bg-zinc-800"
 		>
 			<h1 class="text-3xl font-bold">Restart Words</h1>
 			<a
-				class="flex w-full cursor-pointer items-center gap-4 rounded-xl border-2 border-zinc-300 bg-zinc-200 p-3 transition-colors hover:bg-zinc-300"
+				class="flex w-full cursor-pointer items-center gap-4 rounded-xl border-2 border-zinc-300 bg-zinc-200 p-3 transition-colors hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600"
 				href="/game/daily"
 				title="Daily Puzzle"
 			>
@@ -51,7 +51,7 @@
 				</div>
 			</a>
 			<button
-				class="flex w-full cursor-pointer items-center gap-4 rounded-xl border-2 border-zinc-300 bg-zinc-200 p-3 text-left transition-colors hover:bg-zinc-300"
+				class="flex w-full cursor-pointer items-center gap-4 rounded-xl border-2 border-zinc-300 bg-zinc-200 p-3 text-left transition-colors hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600"
 				onclick={() => (popupOpen = true)}
 			>
 				<Dice5 size="48" class="flex-shrink-0" />
@@ -65,35 +65,42 @@
 		</div>
 
 		<div
-			class="flex h-fit w-fit max-w-lg flex-col items-center justify-center gap-4 rounded-xl border-4 border-zinc-200 bg-zinc-100 p-6"
+			class="flex h-fit w-full max-w-lg flex-col gap-4 rounded-xl border-4 border-zinc-200 bg-zinc-100 p-6 dark:bg-zinc-800"
 		>
-			<div class="flex items-center justify-center gap-4">
-				<CircleUser size="48" class="flex-shrink-0" />
+			<div class="flex items-center gap-4">
+				{#if $session.data}
+					<img
+						src={$session?.data?.user.image}
+						alt="User Avatar"
+						width="48"
+						height="48"
+						class="rounded-full"
+					/>
+				{:else}
+					<CircleUser size="48" class="flex-shrink-0" />
+				{/if}
 				<div>
 					<h3 class=" font-bold">Restart Words Account</h3>
-					<p>
-						Want to save your progress across devices? Use your Discord account to create an
-						account!
-					</p>
+					{#if $session.data}
+						<p>
+							Welcome, <strong>{$session?.data?.user.name}!</strong>
+						</p>
+					{:else}
+						<p>Want to save your stats? Use Discord to create an account!</p>
+					{/if}
 				</div>
 			</div>
 
-			<div class="flex w-full items-center justify-between">
+			<div class="flex w-full items-center justify-center gap-2">
 				{#if $session.data}
-					<div class="flex items-center gap-2">
-						<img
-							src={$session?.data?.user.image}
-							alt="User Avatar"
-							width="32"
-							height="32"
-							class="rounded-full"
-						/>
-						<p class="text-lg">
-							Welcome, <strong>{$session?.data?.user.name}!</strong>
-						</p>
-					</div>
+					<a
+						class="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-zinc-500 px-4 py-2 text-white transition-colors hover:bg-zinc-600"
+						href="/stats"
+					>
+						Stats
+					</a>
 					<button
-						class="flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-zinc-500 px-4 py-2 text-white transition-colors hover:bg-zinc-600"
+						class="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-zinc-500 px-4 py-2 text-white transition-colors hover:bg-zinc-600"
 						onclick={handleSignOut}
 					>
 						Sign out

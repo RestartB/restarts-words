@@ -18,15 +18,23 @@ export const load: PageServerLoad = async (event) => {
 	const currentTime = Math.floor(Date.now() / 1000);
 
 	// Get word that may match
-	const dailyWord = await db
+	const dailyWordResult = await db
 		.select()
 		.from(dailyWords)
 		.where(lte(dailyWords.startTime, currentTime))
 		.orderBy(desc(dailyWords.startTime))
 		.limit(1);
 
+	// Check if a daily word was found
+	if (dailyWordResult.length === 0) {
+		throw new Error('No daily word available');
+	}
+
+	const dailyWord = dailyWordResult[0];
+
 	// Get user stats if authenticated
 	let accComplete = false;
+	let lastAttempts = 0;
 	if (session?.user?.id) {
 		const userStats = await db
 			.select()
@@ -36,14 +44,16 @@ export const load: PageServerLoad = async (event) => {
 
 		if (userStats.length > 0) {
 			const user = userStats[0];
-			accComplete = user.lastCompletedDaily === dailyWord[0]?.id;
+			accComplete = user.lastCompletedDaily === dailyWord.id;
+			lastAttempts = user.lastAttempts;
 		}
-
-		return {
-			fiveLetterWords: fiveLetterWords.map((word) => word.word),
-			dailyWord: dailyWord[0].word, // Fallback word
-			day: dailyWord[0].id, // Fallback day
-			accComplete
-		};
 	}
+
+	return {
+		fiveLetterWords: fiveLetterWords.map((word) => word.word),
+		dailyWord: dailyWord.word,
+		day: dailyWord.id,
+		accComplete,
+		lastAttempts
+	};
 };
