@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { authClient } from '$lib/auth-client';
+	const session = authClient.useSession();
+
 	import { fly } from 'svelte/transition';
 	import { onMount } from 'svelte';
 	import { Confetti } from 'svelte-confetti';
@@ -8,7 +11,7 @@
 
 	// Get data from the page data
 	let { data } = $props();
-	const { fiveLetterWords, dailyWord, day } = data;
+	const { fiveLetterWords, dailyWord, day, accComplete } = data;
 
 	const word = dailyWord.toUpperCase().split('');
 	const length = word.length;
@@ -31,6 +34,34 @@
 	alphabet.split('').forEach((letter) => {
 		letterStatuses[letter] = -1; // -1 = not pressed
 	});
+
+	async function sendResult(won: boolean) {
+		if ($session?.data?.user) {
+			try {
+				const response = await fetch('/api/custom-complete', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({ word: word.join('').toLowerCase(), wordID: day, won }),
+					credentials: 'include'
+				});
+
+				if (!response.ok) {
+					const error = await response.json();
+					console.error('Failed to update stats:', error);
+					return;
+				}
+
+				const result = await response.json();
+				console.log('Stats updated:', result);
+			} catch (error) {
+				console.error('Error updating stats:', error);
+			}
+		} else {
+			console.warn('Not authenticated');
+		}
+	}
 
 	function handleKeyPress(event: KeyboardEvent) {
 		const key = event.key.toUpperCase();
@@ -138,6 +169,8 @@
 								if (rows[currentRow].join('') === word.join('')) {
 									attempts = currentRow + 1;
 									playing = false;
+									sendResult(true);
+
 									setTimeout(() => {
 										hasWon = true;
 									}, 800);
@@ -147,6 +180,8 @@
 
 									if (currentRow >= 6) {
 										playing = false;
+										sendResult(false);
+
 										setTimeout(() => {
 											hasLost = true;
 										}, 800);
@@ -167,17 +202,26 @@
 		const storedDay = localStorage.getItem('day');
 		const storedAttempts = localStorage.getItem('attempts');
 
-		if (storedWord && storedDay && storedAttempts) {
-			const parsedDay = parseInt(storedDay, 10);
-			attempts = parseInt(storedAttempts, 10);
-			if (parsedDay === day) {
-				if (storedWord === dailyWord) {
-					// Set playing to false and show confetti
-					playing = false;
-					setTimeout(() => {
-						hasWon = true;
-					}, 800);
-					return;
+		if (accComplete) {
+			// Set playing to false and show confetti
+			playing = false;
+			setTimeout(() => {
+				hasWon = true;
+			}, 800);
+			return;
+		} else {
+			if (storedWord && storedDay && storedAttempts) {
+				const parsedDay = parseInt(storedDay, 10);
+				attempts = parseInt(storedAttempts, 10);
+				if (parsedDay === day) {
+					if (storedWord === dailyWord) {
+						// Set playing to false and show confetti
+						playing = false;
+						setTimeout(() => {
+							hasWon = true;
+						}, 800);
+						return;
+					}
 				}
 			}
 		}

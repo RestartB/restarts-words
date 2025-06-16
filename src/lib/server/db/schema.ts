@@ -37,13 +37,15 @@ export const dailyWords = sqliteTable('dailyWords', {
 });
 
 export const discordUsers = sqliteTable('discordUsers', {
-	id: integer().primaryKey().notNull(),
+	id: text().primaryKey().notNull(),
 	avatar: text().notNull(),
 	creationTime: integer().notNull(),
 	lastCompletedDaily: integer().notNull(),
 	dailyStreak: integer().notNull(),
 	dailyCompleted: integer().notNull(),
-	dailyWon: integer().notNull()
+	dailyWon: integer().notNull(),
+	customCompleted: integer().notNull(),
+	customWon: integer().notNull(),
 });
 
 export const user = sqliteTable('user', {
