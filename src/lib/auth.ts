@@ -14,7 +14,6 @@ export const auth = betterAuth({
 	}),
 	secret: BETTER_AUTH_SECRET,
 	baseURL: BETTER_AUTH_URL,
-	trustedOrigins: [BETTER_AUTH_URL, "192.168.1.7"],
 	socialProviders: {
 		discord: {
 			clientId: DISCORD_CLIENT_ID,
