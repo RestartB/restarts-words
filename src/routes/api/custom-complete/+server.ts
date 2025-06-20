@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import { auth } from '$lib/auth';
+import { auth } from '$lib/server/auth';
 
 import { db } from '$lib/server/db/index';
 import {

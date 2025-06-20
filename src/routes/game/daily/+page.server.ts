@@ -3,7 +3,7 @@ import { fiveLetters, dailyWords, discordUsers } from '$lib/server/db/schema';
 import { lte, desc } from 'drizzle-orm/expressions';
 
 import { eq } from 'drizzle-orm/expressions';
-import { auth } from '$lib/auth';
+import { auth } from '$lib/server/auth';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {

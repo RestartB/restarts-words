@@ -1,5 +1,5 @@
 import type { LayoutServerLoad } from './$types';
-import { auth } from '$lib/auth';
+import { auth } from '$lib/server/auth';
 
 import { db } from '$lib/server/db/index';
 import { discordUsers, dailyWords } from '$lib/server/db/schema';

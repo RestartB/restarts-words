@@ -1,7 +1,7 @@
 import { db } from '$lib/server/db/index';
 import { discordUsers } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm/expressions';
-import { auth } from '$lib/auth';
+import { auth } from '$lib/server/auth';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
