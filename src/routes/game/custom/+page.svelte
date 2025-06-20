@@ -442,7 +442,7 @@
 					<Key key="L" size={48} status={letterStatuses['L']} />
 				</div>
 				<div class="flex w-full flex-nowrap items-center justify-center gap-2">
-					<Key key="BACK" size={48} status={-1} />
+					<Key key="ENTER" size={48} status={-1} />
 					<Key key="Z" size={48} status={letterStatuses['Z']} />
 					<Key key="X" size={48} status={letterStatuses['X']} />
 					<Key key="C" size={48} status={letterStatuses['C']} />
@@ -450,7 +450,7 @@
 					<Key key="B" size={48} status={letterStatuses['B']} />
 					<Key key="N" size={48} status={letterStatuses['N']} />
 					<Key key="M" size={48} status={letterStatuses['M']} />
-					<Key key="ENTER" size={48} status={-1} />
+					<Key key="BACK" size={48} status={-1} />
 				</div>
 			</div>
 		</div>

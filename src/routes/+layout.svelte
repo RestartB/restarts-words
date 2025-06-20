@@ -18,11 +18,11 @@
 	});
 </script>
 
-<div class="absolute top-0 left-0 -z-10 h-full w-full">
-	<div
-		class="absolute top-0 left-0 -z-10 box-border h-full w-full bg-cover bg-center opacity-50 blur-xl"
-		style="background-image: url('https://picsum.photos/1920/1080'); view-transition-name='background'"
-	></div>
+<div class="fixed top-0 left-0 -z-10 h-full w-full">
+    <div
+        class="fixed top-0 left-0 -z-10 box-border h-full w-full bg-cover bg-center opacity-50 blur-xl bg-fixed"
+        style="background-image: url('https://picsum.photos/1920/1080'); view-transition-name='background'"
+    ></div>
 </div>
 
 <div
