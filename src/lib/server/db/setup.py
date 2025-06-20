@@ -374,7 +374,7 @@ with sqlite3.connect("words.db") as conn:
         cursor.execute("INSERT OR IGNORE INTO nineLetters (word) VALUES (?)", (word,))
 
     print("Entering daily words...")
-    time = 1749859200
+    time = 1750460613
     for word in tqdm(words):
         cursor.execute(
             "INSERT OR IGNORE INTO dailyWords (word, startTime) VALUES (?, ?)",
