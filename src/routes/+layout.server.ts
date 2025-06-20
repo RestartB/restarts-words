@@ -19,6 +19,8 @@ export const load: LayoutServerLoad = async (event) => {
 			.limit(1)
 			.then((rows) => rows[0]);
 
+		let lastCompletedDaily = 0;
+
 		if (!userStats) {
 			// Create user in database
 			await db.insert(discordUsers).values({
@@ -33,6 +35,8 @@ export const load: LayoutServerLoad = async (event) => {
 				customCompleted: 0,
 				customWon: 0
 			});
+		} else {
+			lastCompletedDaily = userStats.lastCompletedDaily;
 		}
 
 		// Get today's word from DB
@@ -54,11 +58,10 @@ export const load: LayoutServerLoad = async (event) => {
 
 		// Check if user's streak is still valid
 		const dailyWord = dailyWordResult[0];
-		const lastCompleted = userStats.lastCompletedDaily;
 
-		if (!(lastCompleted === dailyWord.id || lastCompleted === dailyWord.id - 1)) {
+		if (!(lastCompletedDaily === dailyWord.id || lastCompletedDaily === dailyWord.id - 1)) {
 			console.warn(
-				`User ${session.user.id} streak reset: last completed ${lastCompleted}, current daily word ${dailyWord.id}`
+				`User ${session.user.id} streak reset: last completed ${lastCompletedDaily}, current daily word ${dailyWord.id}`
 			);
 			// Reset streak
 			await db
