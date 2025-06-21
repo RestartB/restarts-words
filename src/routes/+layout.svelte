@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import Header from '$lib/components/Header.svelte';
+	import { Toaster } from 'svelte-sonner';
 
 	import { onNavigate } from '$app/navigation';
 
@@ -19,15 +20,16 @@
 </script>
 
 <div class="fixed top-0 left-0 -z-10 h-full w-full">
-    <div
-        class="fixed top-0 left-0 -z-10 box-border h-full w-full bg-cover bg-center opacity-50 blur-xl bg-fixed"
-        style="background-image: url('https://picsum.photos/1920/1080'); view-transition-name='background'"
-    ></div>
+	<div
+		class="fixed top-0 left-0 -z-10 box-border h-full w-full bg-cover bg-fixed bg-center opacity-50 blur-xl"
+		style="background-image: url('https://picsum.photos/1920/1080'); view-transition-name='background'"
+	></div>
 </div>
 
 <div
 	class="font-display flex min-h-screen w-full flex-col items-center gap-4 overflow-hidden p-4 text-lg"
 >
+	<Toaster position="top-center" closeButton richColors duration={3000} />
 	<Header />
 	<div class="mt-17 flex w-full flex-1 items-center justify-center">
 		{@render children()}

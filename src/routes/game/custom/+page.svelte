@@ -5,6 +5,7 @@
 	import { fly } from 'svelte/transition';
 	import { onMount } from 'svelte';
 	import { Confetti } from 'svelte-confetti';
+	import { toast } from 'svelte-sonner';
 
 	import { CircleCheck, CircleX } from '@lucide/svelte';
 	import Key from '$lib/components/Key.svelte';
@@ -34,6 +35,7 @@
 	let playing = $state(true);
 
 	let popupOpen = $state(false);
+	let calculating = $state(false);
 
 	let letterStatuses: Record<string, number> = $state({});
 
@@ -78,6 +80,7 @@
 		const key = event.key.toUpperCase();
 		if (!playing) return; // Don't handle keys if game is over
 		if (event.repeat) return; // Ignore repeated key presses
+		if (calculating) return; // Prevent actions while calculating
 
 		// Prevent default behavior for game keys
 		if (
@@ -123,6 +126,8 @@
 				position++;
 			}
 		} else if (key === 'ENTER') {
+			calculating = true;
+
 			// Check if the current row is filled
 			if (rows[currentRow].every((char) => char !== '')) {
 				// Check if the word is valid
@@ -198,12 +203,22 @@
 										}, 800);
 									}
 								}
+
+								calculating = false;
 							}
 						}, i * 500);
 					}
 				} else {
+					// Show error if invalid word
+					toast.error('Unknown word');
+					calculating = false;
 					return;
 				}
+			} else {
+				// Show error if the row is not filled
+				toast.error('Not enough letters');
+				calculating = false;
+				return;
 			}
 		}
 	}
@@ -401,7 +416,7 @@
 										class:dark:bg-green-600={rowStatuses[row][i] === 2}
 										bind:this={tileRefs[row][i]}
 										onclick={() => {
-											if (row === currentRow) {
+											if (row === currentRow && !calculating) {
 												position = i;
 											}
 										}}
